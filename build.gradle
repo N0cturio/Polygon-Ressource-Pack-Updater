@@ -1,0 +1,57 @@
+// PolygonPackUPD: a tiny client-side Fabric mod (1.21.1) that keeps the ResourcePack resource pack up to date.
+// It runs in Fabric's preLaunch phase, before Minecraft loads any class or opens any pack, so it needs no Minecraft mappings
+// (plain Java against the Fabric Loader API) and can replace the pack zip without Windows file locks.
+plugins {
+    id 'java'
+}
+
+group = 'triangle'
+version = providers.gradleProperty('modVersion').get()
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://maven.fabricmc.net/' }
+}
+
+dependencies {
+    compileOnly('net.fabricmc:fabric-loader:0.16.9') { transitive = false }
+    testImplementation platform('org.junit:junit-bom:5.10.2')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 21
+    options.encoding = 'UTF-8'
+}
+
+// the links and the pack file name are baked into the jar from gradle.properties, so players never configure anything
+processResources {
+    def props = [
+        version     : project.version,
+        shareUrl    : providers.gradleProperty('packShareUrl').getOrElse(''),
+        packFileName: providers.gradleProperty('packFileName').getOrElse('ResourcePack.zip'),
+        manifestUrl : providers.gradleProperty('packManifestUrl').getOrElse(''),
+    ]
+    inputs.properties(props)
+    filesMatching(['fabric.mod.json', 'packupd-defaults.properties']) { expand(props) }
+}
+
+jar {
+    archiveBaseName = 'polygonpackupd'
+}
+
+// Developer tool, not shipped in the jar: runs the updater for real (the links baked from gradle.properties) into a scratch folder without starting Minecraft.
+//   gradlew checkPack -PgameDir=C:\temp\testgame
+tasks.register('checkPack', JavaExec) {
+    group = 'verification'
+    description = 'Runs the pack update against the configured links into -PgameDir=<folder>.'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'triangle.packupd.DevCheck'
+    args = [providers.gradleProperty('gameDir').getOrElse('build/checkPack-game')]
+}
+
+test {
+    useJUnitPlatform()
+    testLogging { events 'passed', 'failed', 'skipped'; exceptionFormat = 'full' }
+}

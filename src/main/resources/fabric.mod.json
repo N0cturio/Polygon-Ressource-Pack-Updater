@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "polygonpackupd",
+  "version": "${version}",
+  "name": "Polygon Pack Updater",
+  "icon": "assets/polygonpackupd/icon.png",
+  "description": "Keeps the ResourcePack resource pack up to date: checks a small manifest at launch, downloads the new pack when it changed and enables it.",
+  "authors": ["noc"],
+  "license": "All-Rights-Reserved",
+  "environment": "client",
+  "entrypoints": {
+    "preLaunch": ["triangle.packupd.PackUpdaterEntrypoint"]
+  },
+  "depends": {
+    "fabricloader": ">=0.15.0",
+    "minecraft": "1.21.1",
+    "java": ">=21"
+  }
+}
